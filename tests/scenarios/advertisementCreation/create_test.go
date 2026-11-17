@@ -33,6 +33,7 @@ func (s *TestSuite) SetupSuite() {
 	s.loginData = auth.Login(s.T(), os.Getenv("TEST_LOGIN"), os.Getenv("TEST_PASSWORD"))
 }
 
+// Positive: Проверяем создание объявления с валидными полями
 func (s *TestSuite) TestCreate() {
 	request := advModels.NewAdvertisement{
 		Title:       "Лемуры " + time.Now().Format("2006-01-02 15:04:05.000000000"),
@@ -98,6 +99,7 @@ func (s *TestSuite) TestCreate() {
 	})
 }
 
+// Negative: Проверяем 400 ошибку при создании объявления с пустым названием
 func (s *TestSuite) TestCreateTitleEmpty() {
 	request := advModels.NewAdvertisement{
 		Title:       "",
@@ -120,6 +122,7 @@ func (s *TestSuite) TestCreateTitleEmpty() {
 	})
 }
 
+// Negative: Проверяем 400 ошибку при создании объявления с слишком длинным названием
 func (s *TestSuite) TestCreateTitleTooLong() {
 	request := advModels.NewAdvertisement{
 		Title:       strings.Repeat("Лемур", 11),
@@ -142,6 +145,7 @@ func (s *TestSuite) TestCreateTitleTooLong() {
 	})
 }
 
+// Negative: Проверяем 400 ошибку при создании объявления с отрицательной ценой
 func (s *TestSuite) TestCreatePriceNegative() {
 	request := advModels.NewAdvertisement{
 		Title:       "Лемур",
@@ -164,6 +168,7 @@ func (s *TestSuite) TestCreatePriceNegative() {
 	})
 }
 
+// Negative: Проверяем 401 ошибку при попытке создать объявление без токена
 func (s *TestSuite) TestCreateTokenEmpty() {
 	request := advModels.NewAdvertisement{
 		Title:       "Лемуры " + time.Now().Format("2006-01-02 15:04:05.000000000"),
@@ -184,6 +189,7 @@ func (s *TestSuite) TestCreateTokenEmpty() {
 	})
 }
 
+// Negative: Проверяем 401 ошибку при попытке создать объявление с невалидным токеном
 func (s *TestSuite) TestCreateTokenInvalid() {
 	request := advModels.NewAdvertisement{
 		Title:       "Лемуры " + time.Now().Format("2006-01-02 15:04:05.000000000"),

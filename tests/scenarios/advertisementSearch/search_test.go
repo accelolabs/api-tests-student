@@ -48,6 +48,7 @@ func (s *TestSuite) TearDownSuite() {
 	base.TearDownSuite()
 }
 
+// Positive: Проверяем поиск существующего объявления по подстроке из середины названия
 func (s *TestSuite) TestSearchByTitle() {
 	list := advList.GetAdvertisementsList(s.T(), s.loginData.Token, searchMiddle)
 
@@ -60,6 +61,7 @@ func (s *TestSuite) TestSearchByTitle() {
 	})
 }
 
+// Positive: Проверяем поиск по началу, середине и концу названия, а также в разных регистрах
 func (s *TestSuite) TestSearchByTitle_Substring() {
 	cases := []struct {
 		name   string
