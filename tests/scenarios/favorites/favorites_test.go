@@ -261,28 +261,25 @@ func (s *TestSuite) TestFavoritesWithoutToken() {
 		advertisements.DeleteAdvertisement(t, token, created.ID)
 	})
 
-	resp := favManager.PostFavoriteExpectError(t, "", created.ID, http.StatusUnauthorized)
-
 	s.Run("Объявление нельзя добавить без токена", func() {
 		t := s.T()
+		resp := favManager.PostFavoriteExpectError(t, "", created.ID, http.StatusUnauthorized)
 
 		require.Equal(t, "unauthorized", resp.Error)
 		require.Equal(t, "Authorization header required", resp.Message)
 	})
 
-	resp = favManager.PostFavoriteExpectError(t, "", created.ID, http.StatusUnauthorized)
-
-	s.Run("Объявление нельзя посмотреть без токена", func() {
+	s.Run("Список избранного нельзя получить без токена", func() {
 		t := s.T()
+		resp := favManager.GetFavoritesListExpectError(t, "", 1, 50, http.StatusUnauthorized)
 
 		require.Equal(t, "unauthorized", resp.Error)
 		require.Equal(t, "Authorization header required", resp.Message)
 	})
 
-	resp = favManager.PostFavoriteExpectError(t, "", created.ID, http.StatusUnauthorized)
-
-	s.Run("Объявление нельзя удалить без токена", func() {
+	s.Run("Объявление нельзя удалить из избранного без токена", func() {
 		t := s.T()
+		resp := favManager.DeleteFavoriteExpectError(t, "", created.ID, http.StatusUnauthorized)
 
 		require.Equal(t, "unauthorized", resp.Error)
 		require.Equal(t, "Authorization header required", resp.Message)
