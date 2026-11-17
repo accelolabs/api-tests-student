@@ -29,3 +29,11 @@ type Photo struct {
 	SortOrder       int    `json:"sort_order"`
 	CreatedAt       string `json:"created_at"`
 }
+
+type NewAdvertisement struct {
+	Title       *string
+	Description *string
+	Price       *float64
+	Quantity    *int
+	Photos      []string
+}
