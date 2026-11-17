@@ -34,16 +34,11 @@ func (s *TestSuite) SetupSuite() {
 }
 
 func (s *TestSuite) TestCreate() {
-	title := "Лемуры " + time.Now().Format("2006-01-02 15:04:05.000000000")
-	description := "Сидят на ветке и что-то замышляют на будущее."
-	price := 1337.67
-	quantity := 2
-
 	request := advModels.NewAdvertisement{
-		Title:       &title,
-		Description: &description,
-		Price:       &price,
-		Quantity:    &quantity,
+		Title:       "Лемуры " + time.Now().Format("2006-01-02 15:04:05.000000000"),
+		Description: "Сидят на ветке и что-то замышляют на будущее.",
+		Price:       1337.67,
+		Quantity:    2,
 		Photos:      []string{"../../testdata/photo.jpg"},
 	}
 
@@ -63,17 +58,17 @@ func (s *TestSuite) TestCreate() {
 		actual := advertisements.GetAdvertisement(t, token, created.ID)
 
 		require.Equal(t, created.ID, actual.ID)
-		require.Equal(t, title, actual.Title)
-		require.Equal(t, description, actual.Description)
-		require.InDelta(t, price, actual.Price, 0.001)
-		require.Equal(t, quantity, actual.Quantity)
+		require.Equal(t, request.Title, actual.Title)
+		require.Equal(t, request.Description, actual.Description)
+		require.InDelta(t, request.Price, actual.Price, 0.001)
+		require.Equal(t, request.Quantity, actual.Quantity)
 		require.Equal(t, s.loginData.User.Id, actual.UserID)
 	})
 
 	s.Run("Объявление находится по полному названию", func() {
 		t := s.T()
 
-		list := advertisements.GetAdvertisementsList(t, token, title)
+		list := advertisements.GetAdvertisementsList(t, token, request.Title)
 
 		found := false
 		for _, item := range list.Items {
@@ -103,63 +98,108 @@ func (s *TestSuite) TestCreate() {
 	})
 }
 
-func (s *TestSuite) TestCreateWithoutTitle() {
-	description := "Сидят на ветке и что-то замышляют на будущее."
-	price := 1337.67
-	quantity := 2
-
+func (s *TestSuite) TestCreateTitleEmpty() {
 	request := advModels.NewAdvertisement{
-		Title:       nil,
-		Description: &description,
-		Price:       &price,
-		Quantity:    &quantity,
+		Title:       "",
+		Description: "Сидят на ветке и что-то замышляют на будущее.",
+		Price:       1337.67,
+		Quantity:    2,
 		Photos:      []string{"../../testdata/photo.jpg"},
 	}
-
-	expectedStatus := http.StatusBadRequest
-	expectedError := "invalid_request"
-	expectedMessage := "title is required"
 
 	t := s.T()
 	token := s.loginData.Token
 
-	resp := advertisements.PostAdvertisementExpectError(t, token, request, expectedStatus)
+	resp := advertisements.PostAdvertisementExpectError(t, token, request, http.StatusBadRequest)
 
 	s.Run("Объявление без названия не должно быть создано", func() {
 		t := s.T()
 
-		require.Equal(t, expectedError, resp.Error)
-		require.Equal(t, expectedMessage, resp.Message)
+		require.Equal(t, "invalid_request", resp.Error)
+		require.Equal(t, "title is required", resp.Message)
 	})
 }
 
 func (s *TestSuite) TestCreateTitleTooLong() {
-	title := strings.Repeat("Лемур", 11)
-	description := "Сидят на ветке и что-то замышляют на будущее."
-	price := 1337.67
-	quantity := 2
-
 	request := advModels.NewAdvertisement{
-		Title:       &title,
-		Description: &description,
-		Price:       &price,
-		Quantity:    &quantity,
+		Title:       strings.Repeat("Лемур", 11),
+		Description: "Сидят на ветке и что-то замышляют на будущее.",
+		Price:       1337.67,
+		Quantity:    2,
 		Photos:      []string{"../../testdata/photo.jpg"},
 	}
-
-	expectedStatus := http.StatusBadRequest
-	expectedError := "invalid_request"
-	expectedMessage := "title must not exceed 50 characters provided 55"
 
 	t := s.T()
 	token := s.loginData.Token
 
-	resp := advertisements.PostAdvertisementExpectError(t, token, request, expectedStatus)
+	resp := advertisements.PostAdvertisementExpectError(t, token, request, http.StatusBadRequest)
 
 	s.Run("Объявление со слишком длинным названием не должно быть создано", func() {
 		t := s.T()
 
-		require.Equal(t, expectedError, resp.Error)
-		require.Equal(t, expectedMessage, resp.Message)
+		require.Equal(t, "invalid_request", resp.Error)
+		require.Equal(t, "title must not exceed 50 characters provided 55", resp.Message)
+	})
+}
+
+func (s *TestSuite) TestCreatePriceNegative() {
+	request := advModels.NewAdvertisement{
+		Title:       "Лемур",
+		Description: "Сидят на ветке и что-то замышляют на будущее.",
+		Price:       -1337.67,
+		Quantity:    2,
+		Photos:      []string{"../../testdata/photo.jpg"},
+	}
+
+	t := s.T()
+	token := s.loginData.Token
+
+	resp := advertisements.PostAdvertisementExpectError(t, token, request, http.StatusBadRequest)
+
+	s.Run("Объявление с отрицательной ценой не должно быть создано", func() {
+		t := s.T()
+
+		require.Equal(t, "invalid_request", resp.Error)
+		require.Equal(t, "price must be between 0 and 1000000 inclusive", resp.Message)
+	})
+}
+
+func (s *TestSuite) TestCreateTokenEmpty() {
+	request := advModels.NewAdvertisement{
+		Title:       "Лемуры " + time.Now().Format("2006-01-02 15:04:05.000000000"),
+		Description: "Сидят на ветке и что-то замышляют на будущее.",
+		Price:       1337.67,
+		Quantity:    2,
+		Photos:      []string{"../../testdata/photo.jpg"},
+	}
+
+	t := s.T()
+	resp := advertisements.PostAdvertisementExpectError(t, "", request, http.StatusUnauthorized)
+
+	s.Run("Объявление нельзя создать без токена", func() {
+		t := s.T()
+
+		require.Equal(t, "unauthorized", resp.Error)
+		require.Equal(t, "Authorization header required", resp.Message)
+	})
+}
+
+func (s *TestSuite) TestCreateTokenInvalid() {
+	request := advModels.NewAdvertisement{
+		Title:       "Лемуры " + time.Now().Format("2006-01-02 15:04:05.000000000"),
+		Description: "Сидят на ветке и что-то замышляют на будущее.",
+		Price:       1337.67,
+		Quantity:    2,
+		Photos:      []string{"../../testdata/photo.jpg"},
+	}
+
+	t := s.T()
+	resp := advertisements.PostAdvertisementExpectError(t, "invalidtoken", request, http.StatusUnauthorized)
+
+	s.Run("Объявление нельзя создать с неверным токеном", func() {
+		t := s.T()
+
+		require.Equal(t, "unauthorized", resp.Error)
+		require.Equal(t, "Invalid or expired token", resp.Message)
 	})
 }

@@ -31,9 +31,9 @@ type Photo struct {
 }
 
 type NewAdvertisement struct {
-	Title       *string
-	Description *string
-	Price       *float64
-	Quantity    *int
+	Title       string
+	Description string
+	Price       float64
+	Quantity    int
 	Photos      []string
 }

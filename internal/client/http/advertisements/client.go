@@ -34,21 +34,10 @@ func HttpPostAdvertisement(
 
 	request := apiRunner.GetRunner().Auth(token).Create().Post(path.AdvertisementPath)
 
-	if advertisement.Title != nil {
-		request.MultipartFormData("title", *advertisement.Title)
-	}
-
-	if advertisement.Description != nil {
-		request.MultipartFormData("description", *advertisement.Description)
-	}
-
-	if advertisement.Price != nil {
-		request.MultipartFormData("price", fmt.Sprint(*advertisement.Price))
-	}
-
-	if advertisement.Quantity != nil {
-		request.MultipartFormData("quantity", fmt.Sprint(*advertisement.Quantity))
-	}
+	request.MultipartFormData("title", advertisement.Title)
+	request.MultipartFormData("description", advertisement.Description)
+	request.MultipartFormData("price", fmt.Sprint(advertisement.Price))
+	request.MultipartFormData("quantity", fmt.Sprint(advertisement.Quantity))
 
 	if len(advertisement.Photos) > 0 {
 		request.MultipartFile("photos", advertisement.Photos...)
