@@ -13,6 +13,7 @@ import (
 	"github.com/stretchr/testify/require"
 )
 
+// GetFavoritesList возвращает страницу избранного пользователя.
 func GetFavoritesList(t *testing.T, token string, page int, pageSize int) models.FavoritesList {
 	t.Helper()
 
@@ -29,6 +30,7 @@ func GetFavoritesList(t *testing.T, token string, page int, pageSize int) models
 	return resp
 }
 
+// PostFavorite добавляет объявление в избранное и возвращает созданную запись.
 func PostFavorite(t *testing.T, token string, advertisementID string) models.FavoriteItem {
 	t.Helper()
 
@@ -45,6 +47,7 @@ func PostFavorite(t *testing.T, token string, advertisementID string) models.Fav
 	return resp
 }
 
+// DeleteFavorite удаляет объявление из избранного пользователя.
 func DeleteFavorite(t *testing.T, token string, advertisementID string) {
 	t.Helper()
 
@@ -52,6 +55,7 @@ func DeleteFavorite(t *testing.T, token string, advertisementID string) {
 	defer raw.Body.Close()
 }
 
+// GetFavoritesListExpectError проверяет статус отказа получения избранного и возвращает ошибку API.
 func GetFavoritesListExpectError(
 	t *testing.T,
 	token string,
@@ -74,6 +78,7 @@ func GetFavoritesListExpectError(
 	return resp
 }
 
+// PostFavoriteExpectError проверяет статус отказа добавления в избранное и возвращает ошибку API.
 func PostFavoriteExpectError(
 	t *testing.T,
 	token string,
@@ -95,6 +100,7 @@ func PostFavoriteExpectError(
 	return resp
 }
 
+// DeleteFavoriteExpectError проверяет статус отказа удаления из избранного и возвращает ошибку API.
 func DeleteFavoriteExpectError(
 	t *testing.T,
 	token string,

@@ -26,19 +26,27 @@
 ```
 TEST_LOGIN=your_login
 TEST_PASSWORD=your_password
+TEST_LOGIN_2=second_login
+TEST_PASSWORD_2=second_password
 ```
+
+Для избранного нужны два разных аккаунта: первый создаёт объявление, второй добавляет его в избранное.
+Фотография для тестов находится в `tests/testdata/photo.jpg`. Тесты поиска используют заранее созданное объявление: заполните константы в `tests/scenarios/advertisementSearch/search_test.go`.
 
 8. Для запуска всех тестов достаточно выполнить команду в корне проекта:
 
 ```bash
-  go test -v ./...
+  go test -count=1 -p 1 -v ./...
 ```
 
 9. Отдельный пакет с тестами можно запустить командой:
 
 ```bash
-  go test -v ./tests/scenarios/myAdvertisement/
+  go test -count=1 -v ./tests/scenarios/favorites/
 ```
+
+Тесты создания объявлений: `go test -count=1 -v ./tests/scenarios/advertisementCreation/`.
+Флаг `-count=1` отключает кеш результатов, `-p 1` запускает пакеты последовательно.
 
 ## Логирование
 

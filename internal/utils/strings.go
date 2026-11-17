@@ -2,6 +2,7 @@ package utils
 
 import "unicode"
 
+// MixCase чередует нижний и верхний регистр букв с поддержкой кириллицы.
 func MixCase(text string) string {
 	mixed := []rune(text)
 	upper := true

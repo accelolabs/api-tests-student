@@ -204,7 +204,7 @@ func (s *TestSuite) TestRepeatedAdd() {
 }
 
 // Negative: Проверяем добавление и удаление несуществующего объявления из избранного.
-func (s *TestSuite) TestAddAndDeleteIncorectId() {
+func (s *TestSuite) TestAddAndDeleteNonexistentID() {
 	t := s.T()
 	token := s.loginData.Token
 
@@ -242,7 +242,7 @@ func (s *TestSuite) TestAddAndDeleteIncorectId() {
 }
 
 // Negative: Проверяем запрет операций с избранным без токена.
-func (s *TestSuite) TestViewCreateDeleteokenEmpty() {
+func (s *TestSuite) TestFavoritesWithoutToken() {
 	t := s.T()
 	token := s.loginData.Token
 

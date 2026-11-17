@@ -13,6 +13,7 @@ import (
 	"github.com/stretchr/testify/require"
 )
 
+// GetAdvertisementsList возвращает типизированный результат поиска объявлений.
 func GetAdvertisementsList(t *testing.T, token string, text string) models.AdvertisementsList {
 	raw := advertisements.HttpGetAdvertisements(t, token, text)
 	defer raw.Body.Close()
@@ -26,6 +27,7 @@ func GetAdvertisementsList(t *testing.T, token string, text string) models.Adver
 	return resp
 }
 
+// PostAdvertisement создаёт объявление и возвращает его данные.
 func PostAdvertisement(t *testing.T, token string, request models.NewAdvertisement) models.Advertisement {
 	t.Helper()
 
@@ -41,6 +43,7 @@ func PostAdvertisement(t *testing.T, token string, request models.NewAdvertiseme
 	return resp
 }
 
+// PostAdvertisementExpectError проверяет статус отказа создания и возвращает ошибку API.
 func PostAdvertisementExpectError(
 	t *testing.T,
 	token string,
@@ -61,6 +64,7 @@ func PostAdvertisementExpectError(
 	return resp
 }
 
+// GetAdvertisement возвращает данные объявления по ID.
 func GetAdvertisement(t *testing.T, token string, id string) models.Advertisement {
 	t.Helper()
 
@@ -76,6 +80,7 @@ func GetAdvertisement(t *testing.T, token string, id string) models.Advertisemen
 	return resp
 }
 
+// DeleteAdvertisement удаляет объявление по ID.
 func DeleteAdvertisement(t *testing.T, token string, id string) {
 	t.Helper()
 
@@ -83,6 +88,7 @@ func DeleteAdvertisement(t *testing.T, token string, id string) {
 	defer raw.Body.Close()
 }
 
+// GetAdvertisementPhotos возвращает список фотографий объявления.
 func GetAdvertisementPhotos(t *testing.T, token string, id string) []models.Photo {
 	t.Helper()
 

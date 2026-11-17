@@ -10,6 +10,7 @@ import (
 	"api-tests-template/internal/managers/advertisements/models"
 )
 
+// HttpGetAdvertisements ищет объявления по подстроке названия и ожидает HTTP 200.
 func HttpGetAdvertisements(t *testing.T, token string, textForSearch string) *http.Response {
 	t.Helper()
 
@@ -24,6 +25,7 @@ func HttpGetAdvertisements(t *testing.T, token string, textForSearch string) *ht
 		End().Response
 }
 
+// HttpPostAdvertisement создаёт объявление с фотографиями и проверяет ожидаемый статус.
 func HttpPostAdvertisement(
 	t *testing.T,
 	token string,
@@ -46,6 +48,7 @@ func HttpPostAdvertisement(
 	return request.Expect(t).Status(expectedStatus).End().Response
 }
 
+// HttpGetAdvertisement получает объявление по ID и ожидает HTTP 200.
 func HttpGetAdvertisement(t *testing.T, token string, id string) *http.Response {
 	t.Helper()
 
@@ -60,6 +63,7 @@ func HttpGetAdvertisement(t *testing.T, token string, id string) *http.Response 
 		End().Response
 }
 
+// HttpDeleteAdvertisement удаляет объявление по ID и ожидает HTTP 204.
 func HttpDeleteAdvertisement(t *testing.T, token string, id string) *http.Response {
 	t.Helper()
 
@@ -74,6 +78,7 @@ func HttpDeleteAdvertisement(t *testing.T, token string, id string) *http.Respon
 		End().Response
 }
 
+// HttpGetAdvertisementPhotos получает фотографии объявления и ожидает HTTP 200.
 func HttpGetAdvertisementPhotos(t *testing.T, token string, id string) *http.Response {
 	t.Helper()
 

@@ -122,7 +122,7 @@ func (s *TestSuite) TestCreateTitleEmpty() {
 	})
 }
 
-// Negative: Проверяем 400 ошибку при создании объявления с слишком длинным названием
+// Negative: Проверяем 400 ошибку при создании объявления со слишком длинным названием
 func (s *TestSuite) TestCreateTitleTooLong() {
 	request := advModels.NewAdvertisement{
 		Title:       strings.Repeat("Лемур", 11),

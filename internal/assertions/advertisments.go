@@ -5,6 +5,7 @@ import (
 	"testing"
 )
 
+// ContainsAdvertisementByTitle проверяет наличие объявления с точным названием.
 func ContainsAdvertisementByTitle(t *testing.T, items []models.Advertisement, title string) {
 	t.Helper()
 

@@ -9,6 +9,7 @@ import (
 	"testing"
 )
 
+// HttpGetFavorites получает страницу избранного и проверяет ожидаемый статус.
 func HttpGetFavorites(
 	t *testing.T,
 	token string,
@@ -30,6 +31,7 @@ func HttpGetFavorites(
 		End().Response
 }
 
+// HttpPostFavorites добавляет объявление в избранное и проверяет ожидаемый статус.
 func HttpPostFavorites(t *testing.T, token string, id string, expectedStatus int) *http.Response {
 	t.Helper()
 
@@ -45,6 +47,7 @@ func HttpPostFavorites(t *testing.T, token string, id string, expectedStatus int
 		End().Response
 }
 
+// HttpDeleteFavorites удаляет объявление из избранного и проверяет ожидаемый статус.
 func HttpDeleteFavorites(t *testing.T, token string, id string, expectedStatus int) *http.Response {
 	t.Helper()
 
