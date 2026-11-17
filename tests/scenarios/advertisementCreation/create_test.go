@@ -40,16 +40,20 @@ func (s *TestSuite) TestCreate() {
 	t := s.T()
 	token := s.loginData.Token
 
+	t.Log("Создаём объявление")
 	created := advertisements.PostAdvertisement(t, token, request)
 	require.NotEmpty(t, created.ID)
+	t.Logf("Создано объявление %s", created.ID)
 
 	t.Cleanup(func() {
+		t.Logf("Удаляем объявление %s", created.ID)
 		advertisements.DeleteAdvertisement(t, token, created.ID)
 	})
 
 	s.Run("Объявление доступно по ID и содержит переданные данные", func() {
 		t := s.T()
 
+		t.Log("Получаем объявление по ID")
 		actual := advertisements.GetAdvertisement(t, token, created.ID)
 
 		require.Equal(t, created.ID, actual.ID)
@@ -58,11 +62,13 @@ func (s *TestSuite) TestCreate() {
 		require.InDelta(t, request.Price, actual.Price, 0.001)
 		require.Equal(t, request.Quantity, actual.Quantity)
 		require.Equal(t, s.loginData.User.Id, actual.UserID)
+		t.Log("Поля объявления совпадают")
 	})
 
 	s.Run("Объявление находится по полному названию", func() {
 		t := s.T()
 
+		t.Log("Ищем по полному названию")
 		list := advertisements.GetAdvertisementsList(t, token, request.Title)
 
 		found := false
@@ -74,11 +80,13 @@ func (s *TestSuite) TestCreate() {
 		}
 
 		require.True(t, found, "Созданное объявление не найдено в поиске")
+		t.Log("Объявление найдено")
 	})
 
 	s.Run("Фотографии доступны", func() {
 		t := s.T()
 
+		t.Log("Получаем фотографии")
 		photos := advertisements.GetAdvertisementPhotos(t, token, created.ID)
 
 		require.Len(t, photos, len(request.Photos))
@@ -90,6 +98,7 @@ func (s *TestSuite) TestCreate() {
 		}
 
 		require.ElementsMatch(t, created.Photos, photos)
+		t.Log("Фотографии совпадают")
 	})
 }
 
@@ -101,6 +110,7 @@ func (s *TestSuite) TestCreateTitleEmpty() {
 	t := s.T()
 	token := s.loginData.Token
 
+	t.Log("Отправляем запрос с ожидаемой ошибкой")
 	resp := advertisements.PostAdvertisementExpectError(t, token, request, http.StatusBadRequest)
 
 	s.Run("Объявление без названия не должно быть создано", func() {
@@ -118,6 +128,7 @@ func (s *TestSuite) TestCreateTitleTooLong() {
 	t := s.T()
 	token := s.loginData.Token
 
+	t.Log("Отправляем запрос с ожидаемой ошибкой")
 	resp := advertisements.PostAdvertisementExpectError(t, token, request, http.StatusBadRequest)
 
 	s.Run("Объявление со слишком длинным названием не должно быть создано", func() {
@@ -135,6 +146,7 @@ func (s *TestSuite) TestCreatePriceNegative() {
 	t := s.T()
 	token := s.loginData.Token
 
+	t.Log("Отправляем запрос с ожидаемой ошибкой")
 	resp := advertisements.PostAdvertisementExpectError(t, token, request, http.StatusBadRequest)
 
 	s.Run("Объявление с отрицательной ценой не должно быть создано", func() {
@@ -149,6 +161,7 @@ func (s *TestSuite) TestCreateTokenEmpty() {
 	request := helpers.NewAdvertisementRequest()
 
 	t := s.T()
+	t.Log("Отправляем запрос с ожидаемой ошибкой")
 	resp := advertisements.PostAdvertisementExpectError(t, "", request, http.StatusUnauthorized)
 
 	s.Run("Объявление нельзя создать без токена", func() {
@@ -163,6 +176,7 @@ func (s *TestSuite) TestCreateTokenInvalid() {
 	request := helpers.NewAdvertisementRequest()
 
 	t := s.T()
+	t.Log("Отправляем запрос с ожидаемой ошибкой")
 	resp := advertisements.PostAdvertisementExpectError(t, "invalidtoken", request, http.StatusUnauthorized)
 
 	s.Run("Объявление нельзя создать с неверным токеном", func() {

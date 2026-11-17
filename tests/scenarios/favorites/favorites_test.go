@@ -49,10 +49,12 @@ func (s *TestSuite) TestAddAndDelete() {
 	created := helpers.CreateTestAdvertisement(t, token)
 
 	t.Cleanup(func() {
+		t.Logf("Удаляем объявление %s", created.ID)
 		advertisements.DeleteAdvertisement(t, token, created.ID)
 	})
 
 	token2 := s.loginData2.Token
+	t.Logf("Добавляем %s в избранное", created.ID)
 	favManager.PostFavorite(t, token2, created.ID)
 
 	s.Run("Добавленное объявление есть в избранном", func() {
@@ -61,8 +63,10 @@ func (s *TestSuite) TestAddAndDelete() {
 		ids := favoriteAdvertisementIDs(t, s.loginData2.Token)
 
 		require.Contains(t, ids, created.ID)
+		t.Log("Объявление есть в избранном")
 	})
 
+	t.Logf("Удаляем %s из избранного", created.ID)
 	favManager.DeleteFavorite(t, token2, created.ID)
 
 	s.Run("Удаленное объявление отсутствует в избранном", func() {
@@ -71,6 +75,7 @@ func (s *TestSuite) TestAddAndDelete() {
 		ids := favoriteAdvertisementIDs(t, s.loginData2.Token)
 
 		require.NotContains(t, ids, created.ID)
+		t.Log("Объявления нет в избранном")
 	})
 }
 
@@ -82,6 +87,7 @@ func (s *TestSuite) TestDeletedAdvertisement() {
 	created := helpers.CreateTestAdvertisement(t, token)
 
 	token2 := s.loginData2.Token
+	t.Logf("Добавляем %s в избранное", created.ID)
 	favManager.PostFavorite(t, token2, created.ID)
 
 	s.Run("Добавленное объявление есть в избранном", func() {
@@ -90,8 +96,10 @@ func (s *TestSuite) TestDeletedAdvertisement() {
 		ids := favoriteAdvertisementIDs(t, s.loginData2.Token)
 
 		require.Contains(t, ids, created.ID)
+		t.Log("Объявление есть в избранном")
 	})
 
+	t.Logf("Удаляем объявление %s", created.ID)
 	advertisements.DeleteAdvertisement(t, token, created.ID)
 
 	s.Run("Удаленное автором объявление отсутствует в избранном", func() {
@@ -100,6 +108,7 @@ func (s *TestSuite) TestDeletedAdvertisement() {
 		ids := favoriteAdvertisementIDs(t, s.loginData2.Token)
 
 		require.NotContains(t, ids, created.ID)
+		t.Log("Объявления нет в избранном")
 	})
 }
 
@@ -111,9 +120,11 @@ func (s *TestSuite) TestAddOwn() {
 	created := helpers.CreateTestAdvertisement(t, token)
 
 	t.Cleanup(func() {
+		t.Logf("Удаляем объявление %s", created.ID)
 		advertisements.DeleteAdvertisement(t, token, created.ID)
 	})
 
+	t.Log("Отправляем запрос с ожидаемой ошибкой")
 	resp := favManager.PostFavoriteExpectError(t, token, created.ID, http.StatusForbidden)
 
 	s.Run("Собственное объявление нельзя добавить в избранное", func() {
@@ -131,16 +142,20 @@ func (s *TestSuite) TestRepeatedAdd() {
 	created := helpers.CreateTestAdvertisement(t, token)
 
 	t.Cleanup(func() {
+		t.Logf("Удаляем объявление %s", created.ID)
 		advertisements.DeleteAdvertisement(t, token, created.ID)
 	})
 
 	token2 := s.loginData2.Token
+	t.Logf("Добавляем %s в избранное", created.ID)
 	favManager.PostFavorite(t, token2, created.ID)
 
 	t.Cleanup(func() {
+		t.Logf("Удаляем %s из избранного", created.ID)
 		favManager.DeleteFavorite(t, token2, created.ID)
 	})
 
+	t.Log("Отправляем запрос с ожидаемой ошибкой")
 	resp := favManager.PostFavoriteExpectError(t, token2, created.ID, http.StatusConflict)
 
 	s.Run("Объявление нельзя добавить в избранное дважды", func() {
@@ -157,9 +172,11 @@ func (s *TestSuite) TestAddAndDeleteNonexistentID() {
 
 	created := helpers.CreateTestAdvertisement(t, token)
 
+	t.Logf("Удаляем объявление %s", created.ID)
 	advertisements.DeleteAdvertisement(t, token, created.ID)
 
 	token2 := s.loginData2.Token
+	t.Log("Отправляем запрос с ожидаемой ошибкой")
 	resp := favManager.PostFavoriteExpectError(t, token2, created.ID, http.StatusNotFound)
 
 	s.Run("Нельзя добавить несуществующее объявление", func() {
@@ -168,6 +185,7 @@ func (s *TestSuite) TestAddAndDeleteNonexistentID() {
 		assertions.APIErrorEquals(t, resp, "not_found", "Advertisement not found")
 	})
 
+	t.Log("Отправляем запрос с ожидаемой ошибкой")
 	resp = favManager.DeleteFavoriteExpectError(t, token2, created.ID, http.StatusNotFound)
 
 	s.Run("Нельзя удалить несуществующее объявление", func() {
@@ -185,11 +203,13 @@ func (s *TestSuite) TestFavoritesWithoutToken() {
 	created := helpers.CreateTestAdvertisement(t, token)
 
 	t.Cleanup(func() {
+		t.Logf("Удаляем объявление %s", created.ID)
 		advertisements.DeleteAdvertisement(t, token, created.ID)
 	})
 
 	s.Run("Объявление нельзя добавить без токена", func() {
 		t := s.T()
+		t.Log("Отправляем запрос с ожидаемой ошибкой")
 		resp := favManager.PostFavoriteExpectError(t, "", created.ID, http.StatusUnauthorized)
 
 		assertions.APIErrorEquals(t, resp, helpers.UnauthorizedError, helpers.AuthorizationRequiredMessage)
@@ -197,6 +217,7 @@ func (s *TestSuite) TestFavoritesWithoutToken() {
 
 	s.Run("Список избранного нельзя получить без токена", func() {
 		t := s.T()
+		t.Log("Отправляем запрос с ожидаемой ошибкой")
 		resp := favManager.GetFavoritesListExpectError(t, "", favoritesPage, favoritesPageSize, http.StatusUnauthorized)
 
 		assertions.APIErrorEquals(t, resp, helpers.UnauthorizedError, helpers.AuthorizationRequiredMessage)
@@ -204,6 +225,7 @@ func (s *TestSuite) TestFavoritesWithoutToken() {
 
 	s.Run("Объявление нельзя удалить из избранного без токена", func() {
 		t := s.T()
+		t.Log("Отправляем запрос с ожидаемой ошибкой")
 		resp := favManager.DeleteFavoriteExpectError(t, "", created.ID, http.StatusUnauthorized)
 
 		assertions.APIErrorEquals(t, resp, helpers.UnauthorizedError, helpers.AuthorizationRequiredMessage)
@@ -213,6 +235,7 @@ func (s *TestSuite) TestFavoritesWithoutToken() {
 // favoriteAdvertisementIDs возвращает ID всех объявлений в избранном при лимите API в 50 записей.
 func favoriteAdvertisementIDs(t *testing.T, token string) []string {
 	t.Helper()
+	t.Log("Получаем избранное")
 	list := favManager.GetFavoritesList(t, token, favoritesPage, favoritesPageSize)
 	ids := make([]string, 0, len(list.Items))
 
