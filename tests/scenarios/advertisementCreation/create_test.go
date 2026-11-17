@@ -4,7 +4,9 @@ import (
 	"api-tests-template/internal/managers/advertisements"
 	"api-tests-template/internal/managers/auth"
 	"api-tests-template/internal/managers/auth/models"
+	"net/http"
 	"os"
+	"strings"
 	"testing"
 	"time"
 
@@ -98,5 +100,66 @@ func (s *TestSuite) TestCreate() {
 		}
 
 		require.ElementsMatch(t, created.Photos, photos)
+	})
+}
+
+func (s *TestSuite) TestCreateWithoutTitle() {
+	description := "Сидят на ветке и что-то замышляют на будущее."
+	price := 1337.67
+	quantity := 2
+
+	request := advModels.NewAdvertisement{
+		Title:       nil,
+		Description: &description,
+		Price:       &price,
+		Quantity:    &quantity,
+		Photos:      []string{"../../testdata/photo.jpg"},
+	}
+
+	expectedStatus := http.StatusBadRequest
+	expectedError := "invalid_request"
+	expectedMessage := "title is required"
+
+	t := s.T()
+	token := s.loginData.Token
+
+	resp := advertisements.PostAdvertisementExpectError(t, token, request, expectedStatus)
+
+	s.Run("Объявление без названия не должно быть создано", func() {
+		t := s.T()
+
+		require.Equal(t, expectedError, resp.Error)
+		require.Equal(t, expectedMessage, resp.Message)
+	})
+}
+
+func (s *TestSuite) TestCreateTitleTooLong() {
+	title := strings.Repeat("Лемур", 11)
+	description := "Сидят на ветке и что-то замышляют на будущее."
+	price := 1337.67
+	quantity := 2
+
+	request := advModels.NewAdvertisement{
+		Title:       &title,
+		Description: &description,
+		Price:       &price,
+		Quantity:    &quantity,
+		Photos:      []string{"../../testdata/photo.jpg"},
+	}
+
+	expectedStatus := http.StatusBadRequest
+	expectedError := "invalid_request"
+	expectedMessage := "title must not exceed 50 characters provided 55"
+
+	t := s.T()
+	token := s.loginData.Token
+
+	resp := advertisements.PostAdvertisementExpectError(t, token, request, expectedStatus)
+
+	s.Run("Объявление со слишком длинным названием не должно быть создано", func() {
+		t := s.T()
+
+		require.Equal(t, expectedError, resp.Error)
+		require.Equal(t, expectedMessage, resp.Message)
 	})
 }

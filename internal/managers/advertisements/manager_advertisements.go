@@ -8,6 +8,8 @@ import (
 	"net/http"
 	"testing"
 
+	commonModels "api-tests-template/internal/managers/common/models"
+
 	"github.com/stretchr/testify/require"
 )
 
@@ -34,6 +36,26 @@ func PostAdvertisement(t *testing.T, token string, request models.NewAdvertiseme
 	require.NoError(t, err)
 
 	resp := models.Advertisement{}
+	require.NoError(t, json.Unmarshal(body, &resp))
+
+	return resp
+}
+
+func PostAdvertisementExpectError(
+	t *testing.T,
+	token string,
+	request models.NewAdvertisement,
+	expectedStatus int,
+) commonModels.ErrorResponse {
+	t.Helper()
+
+	raw := advertisements.HttpPostAdvertisement(t, token, request, expectedStatus)
+	defer raw.Body.Close()
+
+	body, err := io.ReadAll(raw.Body)
+	require.NoError(t, err)
+
+	resp := commonModels.ErrorResponse{}
 	require.NoError(t, json.Unmarshal(body, &resp))
 
 	return resp
