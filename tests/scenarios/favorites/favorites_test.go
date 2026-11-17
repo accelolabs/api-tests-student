@@ -36,6 +36,7 @@ func (s *TestSuite) SetupSuite() {
 	s.loginData2 = auth.Login(s.T(), os.Getenv("TEST_LOGIN_2"), os.Getenv("TEST_PASSWORD_2"))
 }
 
+// Positive: Проверяем добавление в избранное и удаление из него.
 func (s *TestSuite) TestAddAndDelete() {
 	t := s.T()
 	token := s.loginData.Token
@@ -87,6 +88,7 @@ func (s *TestSuite) TestAddAndDelete() {
 	})
 }
 
+// Positive: Проверяем исчезновение удалённого объявления из избранного.
 func (s *TestSuite) TestDeletedAdvertisement() {
 	t := s.T()
 	token := s.loginData.Token
@@ -134,6 +136,7 @@ func (s *TestSuite) TestDeletedAdvertisement() {
 	})
 }
 
+// Negative: Проверяем запрет добавления собственного объявления в избранное.
 func (s *TestSuite) TestAddOwn() {
 	t := s.T()
 	token := s.loginData.Token
@@ -163,6 +166,7 @@ func (s *TestSuite) TestAddOwn() {
 	})
 }
 
+// Negative: Проверяем запрет повторного добавления в избранное.
 func (s *TestSuite) TestRepeatedAdd() {
 	t := s.T()
 	token := s.loginData.Token
@@ -199,6 +203,7 @@ func (s *TestSuite) TestRepeatedAdd() {
 	})
 }
 
+// Negative: Проверяем добавление и удаление несуществующего объявления из избранного.
 func (s *TestSuite) TestAddAndDeleteIncorectId() {
 	t := s.T()
 	token := s.loginData.Token
@@ -236,6 +241,7 @@ func (s *TestSuite) TestAddAndDeleteIncorectId() {
 	})
 }
 
+// Negative: Проверяем запрет операций с избранным без токена.
 func (s *TestSuite) TestViewCreateDeleteokenEmpty() {
 	t := s.T()
 	token := s.loginData.Token
