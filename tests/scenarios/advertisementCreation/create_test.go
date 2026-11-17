@@ -1,6 +1,7 @@
 package advertisementcreation
 
 import (
+	"api-tests-template/internal/assertions"
 	"api-tests-template/internal/managers/advertisements"
 	"api-tests-template/internal/managers/auth"
 	"api-tests-template/internal/managers/auth/models"
@@ -8,10 +9,9 @@ import (
 	"os"
 	"strings"
 	"testing"
-	"time"
 
-	advModels "api-tests-template/internal/managers/advertisements/models"
 	base "api-tests-template/tests"
+	"api-tests-template/tests/helpers"
 
 	"github.com/stretchr/testify/require"
 	"github.com/stretchr/testify/suite"
@@ -35,13 +35,7 @@ func (s *TestSuite) SetupSuite() {
 
 // Positive: Проверяем создание объявления с валидными полями
 func (s *TestSuite) TestCreate() {
-	request := advModels.NewAdvertisement{
-		Title:       "Лемуры " + time.Now().Format("2006-01-02 15:04:05.000000000"),
-		Description: "Сидят на ветке и что-то замышляют на будущее.",
-		Price:       1337.67,
-		Quantity:    2,
-		Photos:      []string{"../../testdata/photo.jpg"},
-	}
+	request := helpers.NewAdvertisementRequest()
 
 	t := s.T()
 	token := s.loginData.Token
@@ -101,13 +95,8 @@ func (s *TestSuite) TestCreate() {
 
 // Negative: Проверяем 400 ошибку при создании объявления с пустым названием
 func (s *TestSuite) TestCreateTitleEmpty() {
-	request := advModels.NewAdvertisement{
-		Title:       "",
-		Description: "Сидят на ветке и что-то замышляют на будущее.",
-		Price:       1337.67,
-		Quantity:    2,
-		Photos:      []string{"../../testdata/photo.jpg"},
-	}
+	request := helpers.NewAdvertisementRequest()
+	request.Title = ""
 
 	t := s.T()
 	token := s.loginData.Token
@@ -117,20 +106,14 @@ func (s *TestSuite) TestCreateTitleEmpty() {
 	s.Run("Объявление без названия не должно быть создано", func() {
 		t := s.T()
 
-		require.Equal(t, "invalid_request", resp.Error)
-		require.Equal(t, "title is required", resp.Message)
+		assertions.APIErrorEquals(t, resp, helpers.InvalidRequestError, "title is required")
 	})
 }
 
 // Negative: Проверяем 400 ошибку при создании объявления со слишком длинным названием
 func (s *TestSuite) TestCreateTitleTooLong() {
-	request := advModels.NewAdvertisement{
-		Title:       strings.Repeat("Лемур", 11),
-		Description: "Сидят на ветке и что-то замышляют на будущее.",
-		Price:       1337.67,
-		Quantity:    2,
-		Photos:      []string{"../../testdata/photo.jpg"},
-	}
+	request := helpers.NewAdvertisementRequest()
+	request.Title = strings.Repeat("Лемур", 11)
 
 	t := s.T()
 	token := s.loginData.Token
@@ -140,20 +123,14 @@ func (s *TestSuite) TestCreateTitleTooLong() {
 	s.Run("Объявление со слишком длинным названием не должно быть создано", func() {
 		t := s.T()
 
-		require.Equal(t, "invalid_request", resp.Error)
-		require.Equal(t, "title must not exceed 50 characters provided 55", resp.Message)
+		assertions.APIErrorEquals(t, resp, helpers.InvalidRequestError, "title must not exceed 50 characters provided 55")
 	})
 }
 
 // Negative: Проверяем 400 ошибку при создании объявления с отрицательной ценой
 func (s *TestSuite) TestCreatePriceNegative() {
-	request := advModels.NewAdvertisement{
-		Title:       "Лемур",
-		Description: "Сидят на ветке и что-то замышляют на будущее.",
-		Price:       -1337.67,
-		Quantity:    2,
-		Photos:      []string{"../../testdata/photo.jpg"},
-	}
+	request := helpers.NewAdvertisementRequest()
+	request.Price = -request.Price
 
 	t := s.T()
 	token := s.loginData.Token
@@ -163,20 +140,13 @@ func (s *TestSuite) TestCreatePriceNegative() {
 	s.Run("Объявление с отрицательной ценой не должно быть создано", func() {
 		t := s.T()
 
-		require.Equal(t, "invalid_request", resp.Error)
-		require.Equal(t, "price must be between 0 and 1000000 inclusive", resp.Message)
+		assertions.APIErrorEquals(t, resp, helpers.InvalidRequestError, "price must be between 0 and 1000000 inclusive")
 	})
 }
 
 // Negative: Проверяем 401 ошибку при попытке создать объявление без токена
 func (s *TestSuite) TestCreateTokenEmpty() {
-	request := advModels.NewAdvertisement{
-		Title:       "Лемуры " + time.Now().Format("2006-01-02 15:04:05.000000000"),
-		Description: "Сидят на ветке и что-то замышляют на будущее.",
-		Price:       1337.67,
-		Quantity:    2,
-		Photos:      []string{"../../testdata/photo.jpg"},
-	}
+	request := helpers.NewAdvertisementRequest()
 
 	t := s.T()
 	resp := advertisements.PostAdvertisementExpectError(t, "", request, http.StatusUnauthorized)
@@ -184,20 +154,13 @@ func (s *TestSuite) TestCreateTokenEmpty() {
 	s.Run("Объявление нельзя создать без токена", func() {
 		t := s.T()
 
-		require.Equal(t, "unauthorized", resp.Error)
-		require.Equal(t, "Authorization header required", resp.Message)
+		assertions.APIErrorEquals(t, resp, helpers.UnauthorizedError, helpers.AuthorizationRequiredMessage)
 	})
 }
 
 // Negative: Проверяем 401 ошибку при попытке создать объявление с невалидным токеном
 func (s *TestSuite) TestCreateTokenInvalid() {
-	request := advModels.NewAdvertisement{
-		Title:       "Лемуры " + time.Now().Format("2006-01-02 15:04:05.000000000"),
-		Description: "Сидят на ветке и что-то замышляют на будущее.",
-		Price:       1337.67,
-		Quantity:    2,
-		Photos:      []string{"../../testdata/photo.jpg"},
-	}
+	request := helpers.NewAdvertisementRequest()
 
 	t := s.T()
 	resp := advertisements.PostAdvertisementExpectError(t, "invalidtoken", request, http.StatusUnauthorized)
@@ -205,7 +168,6 @@ func (s *TestSuite) TestCreateTokenInvalid() {
 	s.Run("Объявление нельзя создать с неверным токеном", func() {
 		t := s.T()
 
-		require.Equal(t, "unauthorized", resp.Error)
-		require.Equal(t, "Invalid or expired token", resp.Message)
+		assertions.APIErrorEquals(t, resp, helpers.UnauthorizedError, "Invalid or expired token")
 	})
 }

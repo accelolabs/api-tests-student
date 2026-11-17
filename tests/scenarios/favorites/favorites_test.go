@@ -1,21 +1,26 @@
 package favorites
 
 import (
+	"api-tests-template/internal/assertions"
 	"api-tests-template/internal/managers/advertisements"
 	"api-tests-template/internal/managers/auth"
 	"api-tests-template/internal/managers/auth/models"
 	"net/http"
 	"os"
 	"testing"
-	"time"
 
 	base "api-tests-template/tests"
+	"api-tests-template/tests/helpers"
 
-	advModels "api-tests-template/internal/managers/advertisements/models"
 	favManager "api-tests-template/internal/managers/favorites"
 
 	"github.com/stretchr/testify/require"
 	"github.com/stretchr/testify/suite"
+)
+
+const (
+	favoritesPage     = 1
+	favoritesPageSize = 50
 )
 
 type TestSuite struct {
@@ -41,16 +46,7 @@ func (s *TestSuite) TestAddAndDelete() {
 	t := s.T()
 	token := s.loginData.Token
 
-	requestCreateAdv := advModels.NewAdvertisement{
-		Title:       "Лемуры " + time.Now().Format("2006-01-02 15:04:05.000000000"),
-		Description: "Сидят на ветке и что-то замышляют на будущее.",
-		Price:       1337.67,
-		Quantity:    2,
-		Photos:      []string{"../../testdata/photo.jpg"},
-	}
-
-	created := advertisements.PostAdvertisement(t, token, requestCreateAdv)
-	require.NotEmpty(t, created.ID)
+	created := helpers.CreateTestAdvertisement(t, token)
 
 	t.Cleanup(func() {
 		advertisements.DeleteAdvertisement(t, token, created.ID)
@@ -62,12 +58,7 @@ func (s *TestSuite) TestAddAndDelete() {
 	s.Run("Добавленное объявление есть в избранном", func() {
 		t := s.T()
 
-		list := favManager.GetFavoritesList(t, s.loginData2.Token, 1, 50)
-
-		ids := make([]string, 0, len(list.Items))
-		for _, item := range list.Items {
-			ids = append(ids, item.Advertisement.ID)
-		}
+		ids := favoriteAdvertisementIDs(t, s.loginData2.Token)
 
 		require.Contains(t, ids, created.ID)
 	})
@@ -77,12 +68,7 @@ func (s *TestSuite) TestAddAndDelete() {
 	s.Run("Удаленное объявление отсутствует в избранном", func() {
 		t := s.T()
 
-		list := favManager.GetFavoritesList(t, s.loginData2.Token, 1, 50)
-
-		ids := make([]string, 0, len(list.Items))
-		for _, item := range list.Items {
-			ids = append(ids, item.Advertisement.ID)
-		}
+		ids := favoriteAdvertisementIDs(t, s.loginData2.Token)
 
 		require.NotContains(t, ids, created.ID)
 	})
@@ -93,16 +79,7 @@ func (s *TestSuite) TestDeletedAdvertisement() {
 	t := s.T()
 	token := s.loginData.Token
 
-	requestCreateAdv := advModels.NewAdvertisement{
-		Title:       "Лемуры " + time.Now().Format("2006-01-02 15:04:05.000000000"),
-		Description: "Сидят на ветке и что-то замышляют на будущее.",
-		Price:       1337.67,
-		Quantity:    2,
-		Photos:      []string{"../../testdata/photo.jpg"},
-	}
-
-	created := advertisements.PostAdvertisement(t, token, requestCreateAdv)
-	require.NotEmpty(t, created.ID)
+	created := helpers.CreateTestAdvertisement(t, token)
 
 	token2 := s.loginData2.Token
 	favManager.PostFavorite(t, token2, created.ID)
@@ -110,12 +87,7 @@ func (s *TestSuite) TestDeletedAdvertisement() {
 	s.Run("Добавленное объявление есть в избранном", func() {
 		t := s.T()
 
-		list := favManager.GetFavoritesList(t, s.loginData2.Token, 1, 50)
-
-		ids := make([]string, 0, len(list.Items))
-		for _, item := range list.Items {
-			ids = append(ids, item.Advertisement.ID)
-		}
+		ids := favoriteAdvertisementIDs(t, s.loginData2.Token)
 
 		require.Contains(t, ids, created.ID)
 	})
@@ -125,12 +97,7 @@ func (s *TestSuite) TestDeletedAdvertisement() {
 	s.Run("Удаленное автором объявление отсутствует в избранном", func() {
 		t := s.T()
 
-		list := favManager.GetFavoritesList(t, s.loginData2.Token, 1, 50)
-
-		ids := make([]string, 0, len(list.Items))
-		for _, item := range list.Items {
-			ids = append(ids, item.Advertisement.ID)
-		}
+		ids := favoriteAdvertisementIDs(t, s.loginData2.Token)
 
 		require.NotContains(t, ids, created.ID)
 	})
@@ -141,16 +108,7 @@ func (s *TestSuite) TestAddOwn() {
 	t := s.T()
 	token := s.loginData.Token
 
-	requestCreateAdv := advModels.NewAdvertisement{
-		Title:       "Лемуры " + time.Now().Format("2006-01-02 15:04:05.000000000"),
-		Description: "Сидят на ветке и что-то замышляют на будущее.",
-		Price:       1337.67,
-		Quantity:    2,
-		Photos:      []string{"../../testdata/photo.jpg"},
-	}
-
-	created := advertisements.PostAdvertisement(t, token, requestCreateAdv)
-	require.NotEmpty(t, created.ID)
+	created := helpers.CreateTestAdvertisement(t, token)
 
 	t.Cleanup(func() {
 		advertisements.DeleteAdvertisement(t, token, created.ID)
@@ -161,8 +119,7 @@ func (s *TestSuite) TestAddOwn() {
 	s.Run("Собственное объявление нельзя добавить в избранное", func() {
 		t := s.T()
 
-		require.Equal(t, "forbidden", resp.Error)
-		require.Equal(t, "Cannot add own advertisement to favorites", resp.Message)
+		assertions.APIErrorEquals(t, resp, "forbidden", "Cannot add own advertisement to favorites")
 	})
 }
 
@@ -171,16 +128,7 @@ func (s *TestSuite) TestRepeatedAdd() {
 	t := s.T()
 	token := s.loginData.Token
 
-	requestCreateAdv := advModels.NewAdvertisement{
-		Title:       "Лемуры " + time.Now().Format("2006-01-02 15:04:05.000000000"),
-		Description: "Сидят на ветке и что-то замышляют на будущее.",
-		Price:       1337.67,
-		Quantity:    2,
-		Photos:      []string{"../../testdata/photo.jpg"},
-	}
-
-	created := advertisements.PostAdvertisement(t, token, requestCreateAdv)
-	require.NotEmpty(t, created.ID)
+	created := helpers.CreateTestAdvertisement(t, token)
 
 	t.Cleanup(func() {
 		advertisements.DeleteAdvertisement(t, token, created.ID)
@@ -198,8 +146,7 @@ func (s *TestSuite) TestRepeatedAdd() {
 	s.Run("Объявление нельзя добавить в избранное дважды", func() {
 		t := s.T()
 
-		require.Equal(t, "already_exists", resp.Error)
-		require.Equal(t, "Advertisement is already in favorites", resp.Message)
+		assertions.APIErrorEquals(t, resp, "already_exists", "Advertisement is already in favorites")
 	})
 }
 
@@ -208,16 +155,7 @@ func (s *TestSuite) TestAddAndDeleteNonexistentID() {
 	t := s.T()
 	token := s.loginData.Token
 
-	requestCreateAdv := advModels.NewAdvertisement{
-		Title:       "Лемуры " + time.Now().Format("2006-01-02 15:04:05.000000000"),
-		Description: "Сидят на ветке и что-то замышляют на будущее.",
-		Price:       1337.67,
-		Quantity:    2,
-		Photos:      []string{"../../testdata/photo.jpg"},
-	}
-
-	created := advertisements.PostAdvertisement(t, token, requestCreateAdv)
-	require.NotEmpty(t, created.ID)
+	created := helpers.CreateTestAdvertisement(t, token)
 
 	advertisements.DeleteAdvertisement(t, token, created.ID)
 
@@ -227,8 +165,7 @@ func (s *TestSuite) TestAddAndDeleteNonexistentID() {
 	s.Run("Нельзя добавить несуществующее объявление", func() {
 		t := s.T()
 
-		require.Equal(t, "not_found", resp.Error)
-		require.Equal(t, "Advertisement not found", resp.Message)
+		assertions.APIErrorEquals(t, resp, "not_found", "Advertisement not found")
 	})
 
 	resp = favManager.DeleteFavoriteExpectError(t, token2, created.ID, http.StatusNotFound)
@@ -236,8 +173,7 @@ func (s *TestSuite) TestAddAndDeleteNonexistentID() {
 	s.Run("Нельзя удалить несуществующее объявление", func() {
 		t := s.T()
 
-		require.Equal(t, "not_found", resp.Error)
-		require.Equal(t, "Favorite entry not found", resp.Message)
+		assertions.APIErrorEquals(t, resp, "not_found", "Favorite entry not found")
 	})
 }
 
@@ -246,16 +182,7 @@ func (s *TestSuite) TestFavoritesWithoutToken() {
 	t := s.T()
 	token := s.loginData.Token
 
-	requestCreateAdv := advModels.NewAdvertisement{
-		Title:       "Лемуры " + time.Now().Format("2006-01-02 15:04:05.000000000"),
-		Description: "Сидят на ветке и что-то замышляют на будущее.",
-		Price:       1337.67,
-		Quantity:    2,
-		Photos:      []string{"../../testdata/photo.jpg"},
-	}
-
-	created := advertisements.PostAdvertisement(t, token, requestCreateAdv)
-	require.NotEmpty(t, created.ID)
+	created := helpers.CreateTestAdvertisement(t, token)
 
 	t.Cleanup(func() {
 		advertisements.DeleteAdvertisement(t, token, created.ID)
@@ -265,23 +192,33 @@ func (s *TestSuite) TestFavoritesWithoutToken() {
 		t := s.T()
 		resp := favManager.PostFavoriteExpectError(t, "", created.ID, http.StatusUnauthorized)
 
-		require.Equal(t, "unauthorized", resp.Error)
-		require.Equal(t, "Authorization header required", resp.Message)
+		assertions.APIErrorEquals(t, resp, helpers.UnauthorizedError, helpers.AuthorizationRequiredMessage)
 	})
 
 	s.Run("Список избранного нельзя получить без токена", func() {
 		t := s.T()
-		resp := favManager.GetFavoritesListExpectError(t, "", 1, 50, http.StatusUnauthorized)
+		resp := favManager.GetFavoritesListExpectError(t, "", favoritesPage, favoritesPageSize, http.StatusUnauthorized)
 
-		require.Equal(t, "unauthorized", resp.Error)
-		require.Equal(t, "Authorization header required", resp.Message)
+		assertions.APIErrorEquals(t, resp, helpers.UnauthorizedError, helpers.AuthorizationRequiredMessage)
 	})
 
 	s.Run("Объявление нельзя удалить из избранного без токена", func() {
 		t := s.T()
 		resp := favManager.DeleteFavoriteExpectError(t, "", created.ID, http.StatusUnauthorized)
 
-		require.Equal(t, "unauthorized", resp.Error)
-		require.Equal(t, "Authorization header required", resp.Message)
+		assertions.APIErrorEquals(t, resp, helpers.UnauthorizedError, helpers.AuthorizationRequiredMessage)
 	})
+}
+
+// favoriteAdvertisementIDs возвращает ID всех объявлений в избранном при лимите API в 50 записей.
+func favoriteAdvertisementIDs(t *testing.T, token string) []string {
+	t.Helper()
+	list := favManager.GetFavoritesList(t, token, favoritesPage, favoritesPageSize)
+	ids := make([]string, 0, len(list.Items))
+
+	for _, item := range list.Items {
+		ids = append(ids, item.Advertisement.ID)
+	}
+
+	return ids
 }
